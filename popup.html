@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LinkedIn Grabber</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <link rel="stylesheet" type="text/css" href="popup.css">
+</head>
+<body>
+    <div class="container">
+        <h1>LinkedIn Grabber</h1>
+        <button id="extractButton">Check Contact</button>
+        <div id="apiKeyWarning" style="display:none; color: red;">Please set the API Key first!</div>
+        <div id="profileData">
+            <ul>
+                <li><strong>Name:</strong> <span id="name">No data</span></li>
+                <li><strong>Title:</strong> <span id="title">No data</span></li>
+                <li><strong>Company:</strong> <span id="company">No data</span></li>
+                <li><strong>Location:</strong> <span id="location">No data</span></li>
+                <li><strong>Email:</strong> <span id="email">No data</span></li>
+            </ul>
+        </div>
+        <div id="feedback"></div>
+        <hr>
+        <div id="apiKeySection">
+            <input type="text" id="apiKeyInput" placeholder="Enter HubSpot API Token">
+            <button id="saveApiKey">Save API Key</button>
+        </div>
+        <div id="apiKeyStatus" style="display:none;">
+            <p>API Key: <span id="apiKeyMask"></span> <i class="fas fa-edit" id="editApiKey"></i></p>
+        </div>
+    </div>
+    <script src="popup.js"></script>
+</body>
+</html>
