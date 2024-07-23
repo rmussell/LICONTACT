@@ -1,6 +1,18 @@
 console.log("Content script loaded and running");
 
-// Listen for messages from the background script
+function addStyleToHead() {
+    const style = document.createElement('style');
+    style.textContent = `
+        .linkedin-grabber-hidden {
+            opacity: 0 !important;
+            pointer-events: none !important;
+        }
+    `;
+    document.head.appendChild(style);
+}
+
+addStyleToHead();
+
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
     if (request.action === "extractProfileData") {
         extractProfileData().then(profileData => {
@@ -10,18 +22,17 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
     }
 });
 
-// Main function to extract profile data
 async function extractProfileData() {
     try {
         console.log("Starting profile data extraction");
-        
+
         const name = document.querySelector('h1.text-heading-xlarge')?.textContent.trim() || '';
         console.log("Extracted name:", name);
 
         const location = document.querySelector('span.text-body-small.inline.t-black--light.break-words')?.textContent.trim() || '';
         console.log("Extracted location:", location);
 
-        const { title, company } = extractMostRecentJob();
+        const { title, company } = await extractMostRecentJob();
         console.log("Extracted title and company:", { title, company });
 
         const email = await extractEmail();
@@ -36,15 +47,14 @@ async function extractProfileData() {
     }
 }
 
-// Function to extract the most recent job title and company
-function extractMostRecentJob() {
+async function extractMostRecentJob() {
     try {
         console.log("Starting extraction of most recent job");
 
         let title = '';
         let company = '';
 
-        // Try to get title from the top card
+        // Try to get title and company from the top card
         const titleElement = document.querySelector('.text-body-medium');
         if (titleElement) {
             const fullText = titleElement.textContent.trim();
@@ -104,12 +114,11 @@ function extractMostRecentJob() {
     }
 }
 
-// Function to extract email
 async function extractEmail() {
     try {
         console.log("Starting email extraction");
         const contactInfoButton = document.querySelector('a[href*="overlay/contact-info"], button[aria-label*="Contact info"]');
-        
+
         if (!contactInfoButton) {
             console.log("Contact info button not found");
             return '';
@@ -117,41 +126,53 @@ async function extractEmail() {
 
         console.log("Contact info button found, clicking");
         contactInfoButton.click();
-        
+
         // Wait for the modal to appear
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        const modal = document.querySelector('.artdeco-modal__content');
+        const modal = await waitForElement('.artdeco-modal__content', 5000);
         if (!modal) {
             console.log("Modal not found");
             return '';
+        }
+
+        // Hide the modal
+        const modalOverlay = document.querySelector('.artdeco-modal-overlay');
+        if (modalOverlay) {
+            modalOverlay.classList.add('linkedin-grabber-hidden');
         }
 
         console.log("Modal opened, extracting content");
         const modalContent = extractModalContent(modal);
         const email = findEmailInContent(modalContent);
         console.log("Email found:", email);
-        
+
         closeModal();
         return email;
     } catch (error) {
         console.error("Error in email extraction:", error);
         return '';
+    } finally {
+        // Ensure the modal is visible again
+        const modalOverlay = document.querySelector('.artdeco-modal-overlay');
+        if (modalOverlay) {
+            modalOverlay.classList.remove('linkedin-grabber-hidden');
+        }
     }
 }
 
-// Function to close the modal
 function closeModal() {
     const closeButton = document.querySelector('button[aria-label="Dismiss"], button[aria-label="Close"]');
     if (closeButton) {
         closeButton.click();
         console.log("Modal closed");
     } else {
-        console.log("Close button not found");
+        console.log("Close button not found, forcing modal removal");
+        const modal = document.querySelector('.artdeco-modal');
+        if (modal) {
+            modal.remove();
+        }
     }
 }
 
-// Function to extract content from the modal
 function extractModalContent(modal) {
     const content = {};
     const sections = modal.querySelectorAll('section');
@@ -163,7 +184,6 @@ function extractModalContent(modal) {
     return content;
 }
 
-// Function to find email in the extracted content
 function findEmailInContent(content) {
     for (const [section, items] of Object.entries(content)) {
         for (const item of items) {
@@ -174,6 +194,31 @@ function findEmailInContent(content) {
         }
     }
     return '';
+}
+
+function waitForElement(selector, timeout = 5000) {
+    return new Promise((resolve) => {
+        if (document.querySelector(selector)) {
+            return resolve(document.querySelector(selector));
+        }
+
+        const observer = new MutationObserver(() => {
+            if (document.querySelector(selector)) {
+                resolve(document.querySelector(selector));
+                observer.disconnect();
+            }
+        });
+
+        observer.observe(document.body, {
+            childList: true,
+            subtree: true
+        });
+
+        setTimeout(() => {
+            observer.disconnect();
+            resolve(null);
+        }, timeout);
+    });
 }
 
 console.log("Content script fully loaded");

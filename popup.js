@@ -11,14 +11,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     console.log("Popup script loaded");
 
-    // Load saved API key, if any
-    chrome.storage.sync.get('hubspotApiKey', function(data) {
-        console.log("Loaded API key from storage:", data.hubspotApiKey ? "Present" : "Not present");
-        if (data.hubspotApiKey && apiKeyInput) {
-            apiKeyInput.value = data.hubspotApiKey;
-            updateApiKeyDisplay(data.hubspotApiKey);
-        }
-    });
+    // Load and display the current API key status
+    updateApiKeyDisplay();
 
     if (extractButton) {
         extractButton.addEventListener('click', function() {
@@ -56,7 +50,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         showFeedback("Error saving API key: " + chrome.runtime.lastError.message, "error");
                     } else {
                         console.log("API key saved successfully");
-                        updateApiKeyDisplay(apiKey);
+                        updateApiKeyDisplay();
                         showFeedback("API Key saved successfully", "success");
                     }
                 });
@@ -96,12 +90,25 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    function updateApiKeyDisplay(apiKey) {
-        if (apiKeyStatus && apiKeyMask) {
-            apiKeyStatus.style.display = 'block';
-            apiKeyMask.textContent = '*'.repeat(8);
-            apiKeyInput.style.display = 'none';
-            saveApiKeyButton.style.display = 'none';
-        }
+    function updateApiKeyDisplay() {
+        chrome.storage.sync.get('hubspotApiKey', function(data) {
+            if (apiKeyStatus && apiKeyMask) {
+                if (data.hubspotApiKey) {
+                    apiKeyStatus.style.display = 'block';
+                    apiKeyMask.textContent = '*'.repeat(8);
+                    apiKeyInput.style.display = 'none';
+                    saveApiKeyButton.style.display = 'none';
+                    apiKeyWarning.style.display = 'none';
+                } else {
+                    apiKeyStatus.style.display = 'block';
+                    apiKeyMask.textContent = 'NOT SET';
+                    apiKeyInput.style.display = 'inline-block';
+                    saveApiKeyButton.style.display = 'inline-block';
+                    apiKeyWarning.style.display = 'block';
+                }
+            } else {
+                console.error("API Key status elements not found");
+            }
+        });
     }
 });
