@@ -1,4 +1,11 @@
-console.log('Popup script file loaded');
+// popup.js
+console.log('Popup script loaded');
+
+if (typeof sendAnalyticsEvent === 'function') {
+    console.log('Analytics function is available');
+} else {
+    console.log('Analytics function is NOT available');
+}
 
 if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
     console.log('Running in a Chrome extension environment');

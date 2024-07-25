@@ -12,9 +12,6 @@ function sendAnalyticsEvent(eventName, eventParams = {}) {
     if (!clientId) {
       clientId = Math.random().toString(36).substring(2) + Date.now().toString(36);
       chrome.storage.local.set({clientId: clientId});
-      console.log('Generated new client ID:', clientId);
-    } else {
-      console.log('Using existing client ID:', clientId);
     }
 
     const params = new URLSearchParams({
