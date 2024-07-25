@@ -1,11 +1,18 @@
 console.log("Background script loaded");
 
+chrome.runtime.onInstalled.addListener(function() {
+    chrome.storage.local.set({leadsCount: 0});
+});
+
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.type === "CHECK_CONTACT") {
         chrome.storage.sync.get('hubspotApiKey', function(data) {
             if (data.hubspotApiKey) {
                 createContact(request.profileData, data.hubspotApiKey)
-                    .then(() => sendResponse({status: "success", message: "Contact created successfully"}))
+                    .then(() => {
+                        incrementLeadsCount();
+                        sendResponse({status: "success", message: "Contact created successfully"});
+                    })
                     .catch(error => sendResponse({status: "error", message: "Error creating contact: " + error.message}));
             } else {
                 sendResponse({status: "error", message: "HubSpot API key not set"});
@@ -38,6 +45,14 @@ function createContact(profileData, apiKey) {
             return response.json().then(err => { throw new Error(err.message) });
         }
         return response.json();
+    });
+}
+
+function incrementLeadsCount() {
+    chrome.storage.local.get('leadsCount', function(result) {
+        let count = result.leadsCount || 0;
+        count++;
+        chrome.storage.local.set({leadsCount: count});
     });
 }
 

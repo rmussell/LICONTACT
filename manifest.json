@@ -2,16 +2,21 @@
   "manifest_version": 3,
   "name": "LinkedIn Grabber",
   "version": "1.0",
-  "description": "Extracts LinkedIn profiles and checks or creates them in HubSpot.",
+  "description": "Extracts LinkedIn profiles and checks or creates them in HubSpot. Privacy policy: https://your-website.com/privacy-policy",
   "permissions": [
     "activeTab",
     "storage",
-    "alarms"
+    "alarms",
+    "geolocation"
   ],
   "host_permissions": [
     "https://api.hubapi.com/*",
-	"https://www.linkedin.com/*"
+    "https://www.linkedin.com/*",
+    "https://www.google-analytics.com/*"
   ],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'; connect-src https://www.google-analytics.com https://api.hubapi.com;"
+  },
   "background": {
     "service_worker": "background.js"
   },
@@ -33,5 +38,11 @@
     "16": "LICONTACT.png",
     "48": "LICONTACT.png",
     "128": "LICONTACT.png"
-  }
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["developer.jpg"],
+      "matches": ["<all_urls>"]
+    }
+  ]
 }

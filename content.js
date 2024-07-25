@@ -1,23 +1,36 @@
 console.log("Content script loaded and running");
 
-function addStyleToHead() {
-    const style = document.createElement('style');
-    style.textContent = `
-        .linkedin-grabber-hidden {
-            opacity: 0 !important;
-            pointer-events: none !important;
-        }
-    `;
-    document.head.appendChild(style);
-}
+function isValidLinkedInProfilePage() {
+    // Check if the URL matches a LinkedIn profile pattern
+    const urlPattern = /^https:\/\/(www\.)?linkedin\.com\/in\/[\w\-]+\/?$/;
+    if (!urlPattern.test(window.location.href)) {
+        console.log("Not a valid LinkedIn profile URL");
+        return false;
+    }
 
-addStyleToHead();
+    // Check for the presence of key profile elements
+    const nameElement = document.querySelector('h1.text-heading-xlarge');
+    const profileSection = document.getElementById('profile-content');
+
+    if (!nameElement || !profileSection) {
+        console.log("Key profile elements not found");
+        return false;
+    }
+
+    console.log("Valid LinkedIn profile page detected");
+    return true;
+}
 
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
     if (request.action === "extractProfileData") {
-        extractProfileData().then(profileData => {
-            sendResponse({profileData: profileData});
-        });
+        if (!isValidLinkedInProfilePage()) {
+            console.log("Not a valid LinkedIn profile page. Extraction aborted.");
+            sendResponse({error: "Not a valid LinkedIn profile page"});
+        } else {
+            extractProfileData().then(profileData => {
+                sendResponse({profileData: profileData});
+            });
+        }
         return true;  // Indicates that the response is sent asynchronously
     }
 });
@@ -114,9 +127,10 @@ async function extractMostRecentJob() {
     }
 }
 
-async function extractEmail() {
+async function extractEmail(retryCount = 0) {
+    let modalOverlay = null;
     try {
-        console.log("Starting email extraction");
+        console.log(`Starting email extraction, attempt: ${retryCount + 1}`);
         const contactInfoButton = document.querySelector('a[href*="overlay/contact-info"], button[aria-label*="Contact info"]');
 
         if (!contactInfoButton) {
@@ -128,33 +142,57 @@ async function extractEmail() {
         contactInfoButton.click();
 
         // Wait for the modal to appear
-        const modal = await waitForElement('.artdeco-modal__content', 5000);
+        console.log("Waiting for modal to appear...");
+        const modal = await waitForElement('.artdeco-modal__content', 10000);  // 10 seconds timeout
         if (!modal) {
-            console.log("Modal not found");
+            console.log(`Modal not found after 10 seconds, attempt ${retryCount + 1}`);
+            if (retryCount < 2) {
+                console.log("Retrying email extraction");
+                await new Promise(resolve => setTimeout(resolve, 2000));  // Wait for 2 seconds before retrying
+                return extractEmail(retryCount + 1);
+            }
             return '';
         }
+        console.log("Modal found");
 
-        // Hide the modal
-        const modalOverlay = document.querySelector('.artdeco-modal-overlay');
+        // Immediately hide the modal
+        modalOverlay = document.querySelector('.artdeco-modal-overlay');
         if (modalOverlay) {
-            modalOverlay.classList.add('linkedin-grabber-hidden');
+            modalOverlay.style.display = 'none';
+            console.log("Modal hidden");
+        } else {
+            console.log("Modal overlay not found");
         }
 
-        console.log("Modal opened, extracting content");
+        console.log("Extracting modal content");
         const modalContent = extractModalContent(modal);
+        console.log("Modal content extracted:", JSON.stringify(modalContent, null, 2));
+
         const email = findEmailInContent(modalContent);
-        console.log("Email found:", email);
+        console.log("Email search result:", email);
+
+        if (!email && retryCount < 2) {
+            console.log(`Email not found, retrying (attempt ${retryCount + 1})`);
+            closeModal();
+            await new Promise(resolve => setTimeout(resolve, 2000));  // Wait for 2 seconds before retrying
+            return extractEmail(retryCount + 1);
+        }
 
         closeModal();
         return email;
     } catch (error) {
-        console.error("Error in email extraction:", error);
+        console.error(`Error in email extraction (attempt ${retryCount + 1}):`, error);
+        if (retryCount < 2) {
+            console.log("Error occurred, retrying");
+            await new Promise(resolve => setTimeout(resolve, 2000));  // Wait for 2 seconds before retrying
+            return extractEmail(retryCount + 1);
+        }
         return '';
     } finally {
-        // Ensure the modal is visible again
-        const modalOverlay = document.querySelector('.artdeco-modal-overlay');
+        // Ensure the modal is visible again in case it's needed for manual interaction
         if (modalOverlay) {
-            modalOverlay.classList.remove('linkedin-grabber-hidden');
+            modalOverlay.style.display = '';
+            console.log("Modal visibility restored");
         }
     }
 }
@@ -171,6 +209,11 @@ function closeModal() {
             modal.remove();
         }
     }
+    // Ensure any remaining overlay is removed
+    const modalOverlay = document.querySelector('.artdeco-modal-overlay');
+    if (modalOverlay) {
+        modalOverlay.style.display = 'none';
+    }
 }
 
 function extractModalContent(modal) {
@@ -185,14 +228,19 @@ function extractModalContent(modal) {
 }
 
 function findEmailInContent(content) {
+    console.log("Searching for email in content");
     for (const [section, items] of Object.entries(content)) {
+        console.log(`Searching in section: ${section}`);
         for (const item of items) {
+            console.log(`Checking item: ${item}`);
             const emailMatch = item.match(/[\w.-]+@[\w.-]+\.\w+/);
             if (emailMatch) {
+                console.log(`Email found: ${emailMatch[0]}`);
                 return emailMatch[0];
             }
         }
     }
+    console.log("No email found in content");
     return '';
 }
 

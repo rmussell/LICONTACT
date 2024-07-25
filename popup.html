@@ -6,6 +6,7 @@
     <title>LinkedIn Grabber</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
     <link rel="stylesheet" type="text/css" href="popup.css">
+    <script src="analytics.js"></script>
 </head>
 <body>
     <div class="container">
@@ -29,6 +30,19 @@
         </div>
         <div id="apiKeyStatus" style="display:none;">
             <p>API Key: <span id="apiKeyMask"></span> <i class="fas fa-edit" id="editApiKey"></i></p>
+        </div>
+        <hr>
+        <div id="donateSection">
+            <p>Support ongoing development:</p>
+            <button id="donatePayPal">Donate via PayPal</button>
+            <button id="donateVenmo">Donate via Venmo</button>
+        </div>
+        <hr>
+        <div id="developerInfo">
+            <a href="https://www.linkedin.com/in/rael-mussell/" target="_blank">
+                <img src="developer.jpg" alt="Rael Mussell" width="50" height="50">
+                <span>Developed by Rael Mussell</span>
+            </a>
         </div>
     </div>
     <script src="popup.js"></script>
