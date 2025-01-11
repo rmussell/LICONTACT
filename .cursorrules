@@ -1,0 +1,63 @@
+{
+  "rules": [
+    {
+      "id": "js-best-practices",
+      "description": "Enforce consistent coding style and best practices.",
+      "severity": "warning",
+      "options": {
+        "camelCase": true,
+        "useConstLet": true,
+        "requireJSDoc": true
+      }
+    },
+    {
+      "id": "error-handling",
+      "description": "Ensure proper error handling in asynchronous functions.",
+      "severity": "error",
+      "options": {
+        "logErrors": true
+      }
+    },
+    {
+      "id": "dom-manipulation",
+      "description": "Check for existence of DOM elements before manipulation.",
+      "severity": "error",
+      "options": {
+        "useQuerySelector": true
+      }
+    },
+    {
+      "id": "performance",
+      "description": "Encourage performance best practices.",
+      "severity": "warning",
+      "options": {
+        "noSyncXHR": true,
+        "useRequestAnimationFrame": true
+      }
+    },
+    {
+      "id": "security",
+      "description": "Ensure user input is sanitized.",
+      "severity": "error",
+      "options": {
+        "sanitizeInput": true
+      }
+    },
+    {
+      "id": "code-complexity",
+      "description": "Set maximum cyclomatic complexity.",
+      "severity": "warning",
+      "options": {
+        "maxComplexity": 10
+      }
+    },
+    {
+      "id": "testing",
+      "description": "Require unit tests for functions.",
+      "severity": "error",
+      "options": {
+        "requireUnitTests": true
+      }
+    }
+  ]
+} 

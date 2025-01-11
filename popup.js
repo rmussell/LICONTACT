@@ -136,12 +136,17 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function updateProfileData(profileData) {
+        console.log("Received profile data:", profileData);
         for (const [key, value] of Object.entries(profileData)) {
             const element = document.getElementById(key);
             if (element) {
                 element.textContent = value || 'No data';
+                console.log(`Updated ${key} with value:`, value);
+            } else {
+                console.warn(`Element with ID ${key} not found`);
             }
         }
+        console.log("Company data processed:", profileData.company);
     }
 
     function showFeedback(message, type) {

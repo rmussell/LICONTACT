@@ -3,18 +3,22 @@ console.log("Content script loaded and running");
 function isValidLinkedInProfilePage() {
     // Check if the URL matches a LinkedIn profile pattern
     const urlPattern = /^https:\/\/(www\.)?linkedin\.com\/in\/[\w\-]+\/?$/;
+    console.log("Checking LinkedIn profile URL pattern");
     if (!urlPattern.test(window.location.href)) {
-        console.log("Not a valid LinkedIn profile URL");
+        console.log("URL does not match LinkedIn profile pattern: ", window.location.href);
         return false;
     }
 
     // Check for the presence of key profile elements
-    const nameElement = document.querySelector('h1.text-heading-xlarge');
-    const profileSection = document.getElementById('profile-content');
+    console.log("Checking for key profile elements");
+    const nameElement = document.querySelector('h1[class*="text-heading-xlarge"]');
+    const profileSection = document.querySelector('section[class*="pv-top-card"]');
 
-    if (!nameElement || !profileSection) {
-        console.log("Key profile elements not found");
-        return false;
+    if (!nameElement) {
+        console.log("Name element not found");
+    }
+    if (!profileSection) {
+        console.log("Profile section not found");
     }
 
     console.log("Valid LinkedIn profile page detected");
@@ -28,8 +32,12 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
             sendResponse({error: "Not a valid LinkedIn profile page"});
         } else {
             extractProfileData().then(profileData => {
-                profileData.company = extractCompany();
+                console.log("Profile data before sending:", JSON.stringify(profileData));
                 sendResponse({profileData: profileData});
+                console.log("Final profile data to display in modal:", profileData);
+            }).catch(error => {
+                console.error("Error extracting profile data:", error);
+                sendResponse({error: "Failed to extract profile data"});
             });
         }
         return true;  // Indicates that the response is sent asynchronously
@@ -82,11 +90,11 @@ async function extractMostRecentJob() {
             } else if (fullText.includes(' at ')) {
                 const parts = fullText.split(' at ');
                 title = parts[0].trim();
-                company = parts[1].trim();
+                company = parts[1].split(',')[0].trim();
             } else if (fullText.includes(' - ')) {
                 const parts = fullText.split(' - ');
                 title = parts[0].trim();
-                company = parts[1].trim();
+                company = parts[1].split(',')[0].trim();
             } else {
                 title = fullText;
             }
@@ -102,7 +110,7 @@ async function extractMostRecentJob() {
 
         // If title or company is still not found, try to get from experience section
         if (!title || !company) {
-            const experienceSection = document.querySelector('#experience');
+            const experienceSection = document.querySelector('#experience-section');
             if (experienceSection) {
                 const firstJob = experienceSection.querySelector('li.artdeco-list__item');
                 if (firstJob) {
@@ -298,5 +306,55 @@ function extractCompany() {
     console.log("Company name not found in the first experience item");
     return '';
 }
+
+// Enhanced logging and error handling for name extraction
+console.log("Attempting to extract name using profile card selector");
+let name = '';
+try {
+    const profileCard = document.querySelector('section[class*="pv-top-card"]');
+    if (profileCard) {
+        const nameElement = profileCard.querySelector('h1[class*="text-heading-xlarge"]');
+        if (nameElement) {
+            name = nameElement.textContent.trim();
+            console.log("Extracted name from profile card:", name);
+        } else {
+            console.log("Name element not found in profile card");
+        }
+    } else {
+        console.log("Profile card not found");
+    }
+} catch (error) {
+    console.error("Error extracting name:", error);
+}
+
+// Enhanced logging and error handling for company extraction
+console.log("Attempting to extract company using primary method");
+try {
+    const company = extractCompany();
+    console.log("Extracted company:", company);
+} catch (error) {
+    console.error("Error extracting company:", error);
+}
+
+// Ensure company data is correctly passed to the modal
+chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
+    if (request.action === "extractProfileData") {
+        if (!isValidLinkedInProfilePage()) {
+            console.log("Not a valid LinkedIn profile page. Extraction aborted.");
+            sendResponse({error: "Not a valid LinkedIn profile page"});
+        } else {
+            extractProfileData().then(profileData => {
+                profileData.name = name;
+                profileData.company = extractCompany();
+                sendResponse({profileData: profileData});
+                console.log("Final profile data to display in modal:", profileData);
+            }).catch(error => {
+                console.error("Error extracting profile data:", error);
+                sendResponse({error: "Failed to extract profile data"});
+            });
+        }
+        return true;  // Indicates that the response is sent asynchronously
+    }
+});
 
 console.log("Content script fully loaded");
