@@ -1,0 +1,163 @@
+body {
+    font-family: Arial, sans-serif;
+    width: 300px;
+    margin: 0;
+    padding: 15px;
+    background-color: #f5f5f5;
+}
+
+.container {
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+h1 {
+    color: #0077B5;
+    margin-top: 0;
+    margin-bottom: 20px;
+    font-size: 24px;
+    text-align: center;
+}
+
+button {
+    width: 100%;
+    padding: 10px;
+    background-color: #0077B5;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.3s;
+    margin-bottom: 15px;
+}
+
+button:hover {
+    background-color: #005885;
+}
+
+#profileData ul {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+}
+
+#profileData li {
+    padding-left: 20px;
+    position: relative;
+    margin-bottom: 10px;
+}
+
+#profileData li::before {
+    content: "•";
+    position: absolute;
+    left: 0;
+    color: #0077B5;
+}
+
+#profileData li strong {
+    color: #0077B5;
+    margin-right: 5px;
+}
+
+#feedback {
+    margin-top: 15px;
+    padding: 10px;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+#feedback.success {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+#feedback.error {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+hr {
+    border: none;
+    border-top: 1px solid #ddd;
+    margin: 20px 0;
+}
+
+#apiKeySection input[type="text"] {
+    width: 100%;
+    padding: 8px;
+    margin-bottom: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+
+#apiKeyStatus {
+    margin-top: 15px;
+    font-size: 14px;
+}
+
+#apiKeyMask {
+    font-family: monospace;
+}
+
+#editApiKey {
+    cursor: pointer;
+    color: #0077B5;
+    margin-left: 5px;
+}
+
+#donateSection {
+    margin-top: 15px;
+    text-align: center;
+}
+
+#donatePayPal, #donateVenmo {
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 14px;
+    margin: 4px 2px;
+    cursor: pointer;
+    border-radius: 4px;
+}
+
+#donatePayPal {
+    background-color: #0070ba;
+}
+
+#donateVenmo {
+    background-color: #3d95ce;
+}
+
+#donatePayPal:hover {
+    background-color: #005ea6;
+}
+
+#donateVenmo:hover {
+    background-color: #3684b5;
+}
+
+#developerInfo {
+    margin-top: 15px;
+    text-align: center;
+}
+
+#developerInfo a {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    color: #0077B5;
+    font-size: 14px;
+}
+
+#developerInfo img {
+    border-radius: 50%;
+    margin-right: 10px;
+}
