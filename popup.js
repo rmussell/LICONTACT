@@ -1,20 +1,5 @@
-// popup.js
-console.log('Popup script loaded');
-
-if (typeof sendAnalyticsEvent === 'function') {
-    console.log('Analytics function is available');
-} else {
-    console.log('Analytics function is NOT available');
-}
-
-if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
-    console.log('Running in a Chrome extension environment');
-} else {
-    console.log('Not running in a Chrome extension environment');
-}
-
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('Popup script loaded');
+    console.log('Popup DOM fully loaded');
 
     if (typeof sendAnalyticsEvent === 'function') {
         console.log('sendAnalyticsEvent function is available');
@@ -35,10 +20,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const apiKeyWarning = document.getElementById('apiKeyWarning');
     const donatePayPalButton = document.getElementById('donatePayPal');
     const donateVenmoButton = document.getElementById('donateVenmo');
+    const debugModeCheckbox = document.getElementById('debugModeCheckbox');
+    const hubspotSetupSection = document.getElementById('hubspotSetupSection');
 
-    console.log("Popup DOM fully loaded");
-
-    // Get user's location
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition((position) => {
             const latitude = position.coords.latitude;
@@ -96,10 +80,12 @@ document.addEventListener('DOMContentLoaded', function() {
                         showFeedback("Error saving API key: " + chrome.runtime.lastError.message, "error");
                     } else {
                         console.log("API key saved successfully");
-                        updateApiKeyDisplay();
                         showFeedback("API Key saved successfully", "success");
                         console.log("Sending api_key_saved event");
                         sendAnalyticsEvent('api_key_saved');
+                        
+                        // Update the UI after saving the API key
+                        updateApiKeyDisplay();
                     }
                 });
             } else {
@@ -113,6 +99,11 @@ document.addEventListener('DOMContentLoaded', function() {
             apiKeyStatus.style.display = 'none';
             apiKeyInput.style.display = 'inline-block';
             saveApiKeyButton.style.display = 'inline-block';
+
+            // Show the HubSpot API setup section if the API key is being edited
+            if (hubspotSetupSection) {
+                hubspotSetupSection.style.display = 'block';
+            }
         });
     }
 
@@ -129,6 +120,18 @@ document.addEventListener('DOMContentLoaded', function() {
             chrome.tabs.create({ url: 'https://venmo.com/rael-mussell' });
             console.log("Sending donate_venmo_clicked event");
             sendAnalyticsEvent('donate_venmo_clicked');
+        });
+    }
+
+    if (debugModeCheckbox) {
+        chrome.storage.local.get('debugMode', function(data) {
+            debugModeCheckbox.checked = data.debugMode;
+        });
+
+        debugModeCheckbox.addEventListener('change', function() {
+            chrome.runtime.sendMessage({type: "SET_DEBUG_MODE", debugMode: this.checked}, function(response) {
+                console.log("Debug mode set to:", this.checked);
+            });
         });
     }
 
@@ -156,25 +159,32 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function updateApiKeyDisplay() {
         chrome.storage.sync.get('hubspotApiKey', function(data) {
-            if (apiKeyStatus && apiKeyMask) {
+            console.log("Updating API key display. API key exists:", !!data.hubspotApiKey);
+            console.log("apiKeyStatus:", apiKeyStatus);
+            console.log("apiKeyMask:", apiKeyMask);
+            console.log("hubspotSetupSection:", hubspotSetupSection);
+            
+            if (apiKeyStatus && apiKeyMask && hubspotSetupSection) {
                 if (data.hubspotApiKey) {
                     apiKeyStatus.style.display = 'block';
                     apiKeyMask.textContent = '*'.repeat(8);
                     apiKeyInput.style.display = 'none';
                     saveApiKeyButton.style.display = 'none';
                     apiKeyWarning.style.display = 'none';
+                    hubspotSetupSection.style.display = 'none';
+                    console.log("API key set, hiding setup section");
                 } else {
                     apiKeyStatus.style.display = 'block';
                     apiKeyMask.textContent = 'NOT SET';
                     apiKeyInput.style.display = 'inline-block';
                     saveApiKeyButton.style.display = 'inline-block';
                     apiKeyWarning.style.display = 'block';
+                    hubspotSetupSection.style.display = 'block';
+                    console.log("API key not set, showing setup section");
                 }
             } else {
-                console.error("API Key status elements not found");
+                console.error("API Key status elements or HubSpot setup section not found");
             }
         });
     }
 });
-
-console.log('Popup script file fully loaded');

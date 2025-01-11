@@ -28,6 +28,7 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
             sendResponse({error: "Not a valid LinkedIn profile page"});
         } else {
             extractProfileData().then(profileData => {
+                profileData.company = extractCompany();
                 sendResponse({profileData: profileData});
             });
         }
@@ -267,6 +268,35 @@ function waitForElement(selector, timeout = 5000) {
             resolve(null);
         }, timeout);
     });
+}
+
+function extractCompany() {
+    const experienceSection = document.getElementById('experience-section');
+    if (!experienceSection) {
+        console.log("Experience section not found");
+        return '';
+    }
+
+    const firstExperienceItem = experienceSection.querySelector('li.artdeco-list__item');
+    if (!firstExperienceItem) {
+        console.log("No experience items found");
+        return '';
+    }
+
+    const companyElement = firstExperienceItem.querySelector('span.pv-entity__secondary-title');
+    if (companyElement) {
+        return companyElement.textContent.trim();
+    }
+
+    // Fallback: try to find company name in the experience item text
+    const experienceText = firstExperienceItem.textContent;
+    const companyMatch = experienceText.match(/at\s+(.*?)\s*$/);
+    if (companyMatch && companyMatch[1]) {
+        return companyMatch[1].trim();
+    }
+
+    console.log("Company name not found in the first experience item");
+    return '';
 }
 
 console.log("Content script fully loaded");
