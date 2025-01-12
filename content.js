@@ -48,36 +48,43 @@ async function extractProfileData() {
     try {
         console.log("Starting profile data extraction");
 
-        // Fetch the entire page source
+        // Extract the entire page source
         const pageSource = document.documentElement.innerHTML;
 
-        // Use regex to find all JSON-like structures containing firstName and lastName
-        const jsonMatches = pageSource.match(/<code style="display: none" id="bpr-guid-\d+">(.+?)<\/code>/g);
+        // Use regex to find all <code> tags containing JSON-like structures
+        const jsonMatches = pageSource.match(/<code[^>]*>(.*?)<\/code>/g);
         let name = '';
 
         if (jsonMatches) {
+            console.log(`Found ${jsonMatches.length} JSON-like structures`);
             for (const match of jsonMatches) {
-                const jsonString = match.match(/<code style="display: none" id="bpr-guid-\d+">(.+?)<\/code>/)[1];
-                const decodedString = JSON.parse(jsonString.replace(/&quot;/g, '"'));
+                const jsonString = match.match(/<code[^>]*>(.*?)<\/code>/)[1];
+                try {
+                    const decodedString = JSON.parse(jsonString.replace(/&quot;/g, '"'));
+                    console.log("Decoded JSON:", decodedString);
 
-                // Check if the JSON contains firstName and lastName
-                if (decodedString.data && decodedString.data.included) {
-                    for (const item of decodedString.data.included) {
-                        if (item.firstName && item.lastName) {
-                            const firstName = item.firstName || '';
-                            const lastName = item.lastName || '';
-                            name = `${firstName} ${lastName}`.trim();
-                            console.log("Extracted name:", name);
-                            break;
+                    if (decodedString.included) {
+                        for (const item of decodedString.included) {
+                            if (item.firstName && item.lastName) {
+                                console.log("Found firstName and lastName in JSON:", item);
+                                const firstName = item.firstName || '';
+                                const lastName = item.lastName || '';
+                                name = `${firstName} ${lastName}`.trim();
+                                break;
+                            }
                         }
                     }
+                } catch (error) {
+                    console.error("Error parsing JSON:", error);
                 }
 
-                if (name) break; // Exit loop if name is found
+                if (name) break;
             }
         } else {
-            console.log("No JSON-like structures found in page source");
+            console.log("No JSON-like structures found");
         }
+
+        console.log("Extracted name:", name);
 
         const location = document.querySelector('span.text-body-small.inline.t-black--light.break-words')?.textContent.trim() || '';
         console.log("Extracted location:", location);
