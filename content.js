@@ -48,8 +48,36 @@ async function extractProfileData() {
     try {
         console.log("Starting profile data extraction");
 
-        const name = document.querySelector('h1.text-heading-xlarge')?.textContent.trim() || '';
-        console.log("Extracted name:", name);
+        // Fetch the entire page source
+        const pageSource = document.documentElement.innerHTML;
+
+        // Use regex to find all JSON-like structures containing firstName and lastName
+        const jsonMatches = pageSource.match(/<code style="display: none" id="bpr-guid-\d+">(.+?)<\/code>/g);
+        let name = '';
+
+        if (jsonMatches) {
+            for (const match of jsonMatches) {
+                const jsonString = match.match(/<code style="display: none" id="bpr-guid-\d+">(.+?)<\/code>/)[1];
+                const decodedString = JSON.parse(jsonString.replace(/&quot;/g, '"'));
+
+                // Check if the JSON contains firstName and lastName
+                if (decodedString.data && decodedString.data.included) {
+                    for (const item of decodedString.data.included) {
+                        if (item.firstName && item.lastName) {
+                            const firstName = item.firstName || '';
+                            const lastName = item.lastName || '';
+                            name = `${firstName} ${lastName}`.trim();
+                            console.log("Extracted name:", name);
+                            break;
+                        }
+                    }
+                }
+
+                if (name) break; // Exit loop if name is found
+            }
+        } else {
+            console.log("No JSON-like structures found in page source");
+        }
 
         const location = document.querySelector('span.text-body-small.inline.t-black--light.break-words')?.textContent.trim() || '';
         console.log("Extracted location:", location);

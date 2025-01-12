@@ -7,7 +7,9 @@
       "options": {
         "camelCase": true,
         "useConstLet": true,
-        "requireJSDoc": true
+        "requireJSDoc": true,
+        "noUnusedVars": true,
+        "noImplicitAny": true
       }
     },
     {
@@ -15,7 +17,8 @@
       "description": "Ensure proper error handling in asynchronous functions.",
       "severity": "error",
       "options": {
-        "logErrors": true
+        "logErrors": true,
+        "catchAsyncErrors": true
       }
     },
     {
@@ -23,7 +26,8 @@
       "description": "Check for existence of DOM elements before manipulation.",
       "severity": "error",
       "options": {
-        "useQuerySelector": true
+        "useQuerySelector": true,
+        "checkElementExistence": true
       }
     },
     {
@@ -32,7 +36,8 @@
       "severity": "warning",
       "options": {
         "noSyncXHR": true,
-        "useRequestAnimationFrame": true
+        "useRequestAnimationFrame": true,
+        "optimizeLoops": true
       }
     },
     {
@@ -40,7 +45,8 @@
       "description": "Ensure user input is sanitized.",
       "severity": "error",
       "options": {
-        "sanitizeInput": true
+        "sanitizeInput": true,
+        "validateInput": true
       }
     },
     {
@@ -56,7 +62,17 @@
       "description": "Require unit tests for functions.",
       "severity": "error",
       "options": {
-        "requireUnitTests": true
+        "requireUnitTests": true,
+        "coverageThreshold": 80
+      }
+    },
+    {
+      "id": "chrome-extension",
+      "description": "Specific rules for Chrome extension development.",
+      "severity": "warning",
+      "options": {
+        "useManifestV3": true,
+        "avoidInlineScripts": true
       }
     }
   ]
