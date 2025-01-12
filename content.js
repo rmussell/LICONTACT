@@ -11,12 +11,18 @@ function isValidLinkedInProfilePage() {
 
     // Check for the presence of key profile elements
     console.log("Checking for key profile elements");
-    const nameElement = document.querySelector('h1[class*="text-heading-xlarge"]');
-    const profileSection = document.querySelector('section[class*="pv-top-card"]');
+    const nameElement = document.querySelector('h1[class*="text-heading-xlarge"]') || document.querySelector('code[id*="bpr-guid"]');
+    const profileSection = document.querySelector('section[class*="pv-top-card"]') || document.querySelector('code[id*="bpr-guid"]');
 
     if (!nameElement) {
         console.log("Name element not found");
+    } else {
+        const fullName = nameElement.textContent.trim();
+        const [firstName, ...lastNameParts] = fullName.split(' ');
+        const lastName = lastNameParts.join(' ');
+        console.log(`First Name: ${firstName}, Last Name: ${lastName}`);
     }
+
     if (!profileSection) {
         console.log("Profile section not found");
     }
@@ -45,63 +51,45 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
 });
 
 async function extractProfileData() {
-    try {
-        console.log("Starting profile data extraction");
+    console.log("Starting profile data extraction");
 
-        // Extract the entire page source
-        const pageSource = document.documentElement.innerHTML;
+    // Attempt to extract name from JSON-like structures
+    const codeElements = document.querySelectorAll('code');
+    let name = '';
 
-        // Use regex to find all <code> tags containing JSON-like structures
-        const jsonMatches = pageSource.match(/<code[^>]*>(.*?)<\/code>/g);
-        let name = '';
-
-        if (jsonMatches) {
-            console.log(`Found ${jsonMatches.length} JSON-like structures`);
-            for (const match of jsonMatches) {
-                const jsonString = match.match(/<code[^>]*>(.*?)<\/code>/)[1];
-                try {
-                    const decodedString = JSON.parse(jsonString.replace(/&quot;/g, '"'));
-                    console.log("Decoded JSON:", decodedString);
-
-                    if (decodedString.included) {
-                        for (const item of decodedString.included) {
-                            if (item.firstName && item.lastName) {
-                                console.log("Found firstName and lastName in JSON:", item);
-                                const firstName = item.firstName || '';
-                                const lastName = item.lastName || '';
-                                name = `${firstName} ${lastName}`.trim();
-                                break;
-                            }
-                        }
+    for (let codeElement of codeElements) {
+        try {
+            const jsonData = JSON.parse(codeElement.textContent);
+            if (jsonData && jsonData.included) {
+                for (let item of jsonData.included) {
+                    if (item.firstName && item.lastName) {
+                        name = `${item.firstName} ${item.lastName}`;
+                        console.log(`Extracted name: ${name}`);
+                        break;
                     }
-                } catch (error) {
-                    console.error("Error parsing JSON:", error);
                 }
-
-                if (name) break;
             }
-        } else {
-            console.log("No JSON-like structures found");
+        } catch (error) {
+            console.error("Error parsing JSON from code element:", error);
         }
-
-        console.log("Extracted name:", name);
-
-        const location = document.querySelector('span.text-body-small.inline.t-black--light.break-words')?.textContent.trim() || '';
-        console.log("Extracted location:", location);
-
-        const { title, company } = await extractMostRecentJob();
-        console.log("Extracted title and company:", { title, company });
-
-        const email = await extractEmail();
-        console.log("Extracted email:", email);
-
-        const profileData = { name, title, company, location, email };
-        console.log("Final extracted data:", profileData);
-        return profileData;
-    } catch (error) {
-        console.error("Error extracting profile data:", error);
-        return { name: '', title: '', company: '', location: '', email: '' };
     }
+
+    if (!name) {
+        console.log("No name found in JSON-like structures");
+    }
+
+    const location = document.querySelector('span.text-body-small.inline.t-black--light.break-words')?.textContent.trim() || '';
+    console.log("Extracted location:", location);
+
+    const { title, company } = await extractMostRecentJob();
+    console.log("Extracted title and company:", { title, company });
+
+    const email = await extractEmail();
+    console.log("Extracted email:", email);
+
+    const profileData = { name, title, company, location, email };
+    console.log("Final extracted data:", profileData);
+    return profileData;
 }
 
 async function extractMostRecentJob() {
