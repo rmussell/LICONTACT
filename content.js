@@ -35,7 +35,14 @@ async function extractContactInfo() {
 
         // Extract phone
         const phoneElement = document.querySelector('.pv-contact-info__contact-type span.t-14.t-black.t-normal');
-        const phone = phoneElement ? phoneElement.textContent.trim() : '';
+        let phone = '';
+        if (phoneElement) {
+            const phoneText = phoneElement.textContent.trim();
+            // Only store if it contains at least 10 digits
+            if (/\d.*\d.*\d.*\d.*\d.*\d.*\d.*\d.*\d.*\d/.test(phoneText)) {
+                phone = phoneText;
+            }
+        }
         console.log("Found phone:", phone);
 
         // Extract websites
@@ -74,10 +81,13 @@ async function extractProfileData() {
         // Extract name from profile picture
         const profilePicture = document.querySelector('img.pv-top-card-profile-picture__image--show');
         let name = '';
+        let profilePictureUrl = '';
         if (profilePicture) {
             console.log("Found profile picture element:", profilePicture);
             name = profilePicture.title || profilePicture.alt || '';
+            profilePictureUrl = profilePicture.src || '';
             console.log("Extracted name from profile picture:", name);
+            console.log("Extracted profile picture URL:", profilePictureUrl);
         }
 
         // Extract location - updated selector
@@ -102,7 +112,8 @@ async function extractProfileData() {
             email,
             phone,
             websites,
-            linkedinUrl
+            linkedinUrl,
+            profilePictureUrl
         };
     } catch (error) {
         console.error("Error in profile data extraction:", error);
@@ -121,15 +132,34 @@ async function extractMostRecentJob() {
             title = titleElement.textContent.trim();
             console.log("Found job title:", title);
         } else {
-            console.log("Job title element not found");
+            // Try alternate selector
+            const altTitleElement = document.querySelector('.display-flex.align-items-center.mr1.t-bold span[aria-hidden="true"]');
+            if (altTitleElement) {
+                title = altTitleElement.textContent.trim();
+                console.log("Found job title:", title);
+            } else {
+                console.log("Job title element not found");
+            }
         }
 
-        // Look for the company name
-        const companyElement = document.querySelector('a[data-field="experience_company_logo"] .display-flex.align-items-center.mr1.hoverable-link-text.t-bold span[aria-hidden="true"]');
-        if (companyElement) {
-            company = companyElement.textContent.trim();
-            console.log("Found company:", company);
-        } else {
+        // Look for the company name with multiple selectors
+        const companySelectors = [
+            'a[data-field="experience_company_logo"] .display-flex.align-items-center.mr1.hoverable-link-text.t-bold span[aria-hidden="true"]',
+            '.display-flex.flex-column.full-width .t-14.t-normal span[aria-hidden="true"]'
+        ];
+
+        for (const selector of companySelectors) {
+            const companyElement = document.querySelector(selector);
+            if (companyElement) {
+                company = companyElement.textContent.split('·')[0].trim();
+                if (!company.includes('mutual connection')) {  // Skip if it's a mutual connection text
+                    console.log("Found company:", company);
+                    break;
+                }
+            }
+        }
+
+        if (!company) {
             console.log("Company element not found");
         }
 
