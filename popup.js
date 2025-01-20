@@ -45,12 +45,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (chrome.runtime.lastError) {
                         console.error(chrome.runtime.lastError);
                         showFeedback("Error: " + chrome.runtime.lastError.message, "error");
-                    } else if (response.error) {
-                        console.error(response.error);
-                        showFeedback(response.error, "error");
-                    } else if (response && response.profileData) {
-                        updateProfileData(response.profileData);
-                        chrome.runtime.sendMessage({type: "CHECK_CONTACT", profileData: response.profileData}, function(response) {
+                    } else if (response.status === "error") {
+                        console.error(response.message);
+                        showFeedback(response.message, "error");
+                    } else if (response && response.status === "success" && response.data) {
+                        updateProfileData(response.data);
+                        chrome.runtime.sendMessage({type: "CHECK_CONTACT", profileData: response.data}, function(response) {
                             if (chrome.runtime.lastError) {
                                 console.error(chrome.runtime.lastError);
                                 showFeedback("Error: " + chrome.runtime.lastError.message, "error");

@@ -38,7 +38,9 @@ function createContact(profileData, apiKey) {
                 lastname: profileData.name.split(' ').slice(1).join(' '),
                 jobtitle: profileData.title,
                 company: profileData.company,
-                city: profileData.location
+                city: profileData.location,
+                phone: profileData.phone,
+                hs_linkedin_url: profileData.linkedinUrl
             }
         })
     })
