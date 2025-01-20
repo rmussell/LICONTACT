@@ -1,0 +1,14 @@
+We have 4 Bugs
+
+1. The name being parsed from the JSON structure isn't alwasy the correct profile name - FIXED (now getting from profile picture title/alt)
+2. Company name isn't being collected - FIXED (added multiple selectors to find company name)
+3. Sometimes the name grabbed is persisted to the next grab and it fetches the wrong name
+4. Phone field sometimes captures dates instead of phone numbers - FIXED (added validation to only store actual phone numbers)
+
+
+We have 1 feature request
+
+1. Capture the linkedin profile URL and push it to HubSpot - FIXED (now using hs_linkedin_url property)
+
+Future Enhancement Ideas:
+1. Add profile picture to HubSpot (requires file upload implementation) 
